@@ -7,6 +7,7 @@ from urllib.parse import urlparse
 
 PORT = 8765
 
+
 HTML = f"""<!doctype html>
 <html lang="ru">
 <head>
@@ -176,14 +177,14 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if body:
             self.wfile.write(body)
 
-    def do_get(self):
+    def do_GET(self):
         path = urlparse(self.path).path
         if path == "/" or path == "/index.html":
             self._send(200, HTML.encode("utf-8"), "text/html; charset=utf-8")
         else:
             self._send(404, b"Not found")
 
-    def do_post(self):
+    def do_POST(self):
         path = urlparse(self.path).path
         if path == "/pause":
             send_key("space")
@@ -208,9 +209,19 @@ class Handler(http.server.BaseHTTPRequestHandler):
     def log_message(self, format, *args):
         return
 
+def get_local_ip() -> str:
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(("8.8.8.8", 80))
+        return s.getsockname()[0]
+    except Exception:
+        return "127.0.0.1"
+    finally:
+        s.close()
 
 def main():
-    ip = socket.gethostbyname(socket.gethostname())
+    ip = get_local_ip()
+    # ip = socket.gethostbyname(socket.gethostname())
     host = f"http://{ip}:{PORT}"
     with socketserver.TCPServer(("", PORT), Handler) as httpd:
         print(f"Mac Remote listening on {host}/")
